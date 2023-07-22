@@ -45,16 +45,22 @@ class CommandWorker : Runnable {
     )
     var groupSize: Int = 60
 
-    override fun run() {
-        val hypixelAPI = HypixelPipeline(key,
-            HypixelRateLimiter(refreshTime, groupSize, sleepTime)
-        )
-        hypixelAPI.start()
+    @CommandLine.Option(
+        names = ["-r", "--retry"],
+        description = ["Number of repetitions after failure (Default: 3)"]
+    )
+    var retry: Int = 3
 
+    override fun run() {
+        val rateLimiter = HypixelRateLimiter(refreshTime, groupSize, sleepTime)
+        val hypixelAPI = HypixelPipeline(key, rateLimiter)
+        hypixelAPI.retryTimes = retry
+
+        hypixelAPI.start()
 
         TNTServer.freePacketDelay = freePacketDelay.toMillis()
         TNTServer.reconnectDelay = reconnectDelay.toMillis()
-        TNTServer.connect(user, password, hypixelAPI)
-            .get() // Block thread
+        val future = TNTServer.connect(user, password, hypixelAPI)
+        future.get()
     }
 }

@@ -44,26 +44,32 @@ class HypixelPipeline(val key: UUID, val rateLimiter: HypixelRateLimiter) : Runn
     @Blocking
     override fun run() {
         while (!Thread.interrupted()) {
-            var task: RequestInterface? = tasks.take()
+            try {
+                var task: RequestInterface? = tasks.take()
 
-            for (i in 1..retryTimes) {
-                try {
-                    if (task is DefaultHypixelRequest) {
-                        if (!hypixelRequest(task)) continue
-                    } else if (task is CustomRequest) {
-                        if (!task.listener.test(rateLimiter)) continue
+                for (i in 1..retryTimes) {
+                    try {
+                        if (task is DefaultHypixelRequest) {
+                            if (!hypixelRequest(task)) continue
+                        } else if (task is CustomRequest) {
+                            if (!task.listener.test(rateLimiter)) continue
+                        }
+
+                        task = null
+                        break
+                    } catch (_: InterruptedException) {
+                        return
+                    } catch (e: Exception) {
+                        logger.warn("Hypixel loop has an error, try count: $i", e)
                     }
-
-                    task = null
-                    break
-                } catch (_: InterruptedException) {
-                    return
-                } catch (e: Exception) {
-                    logger.warn("Hypixel loop has an error, try count: $i", e)
                 }
-            }
 
-            task?.returnNothing()
+                task?.returnNothing()
+            } catch (_: InterruptedException) {
+                return
+            } catch (e: Exception) {
+                logger.warn("Hypixel loop has an error", e)
+            }
         }
     }
 
@@ -123,7 +129,10 @@ class HypixelPipeline(val key: UUID, val rateLimiter: HypixelRateLimiter) : Runn
     private data class HypixelParser(@SerializedName("player") val player: HypixelPlayerStorage?)
 
     abstract class RequestInterface(open val priority: Int) : Comparable<RequestInterface> {
-        override fun compareTo(other: RequestInterface): Int = priority
+        override fun compareTo(other: RequestInterface): Int {
+            return other.priority.compareTo(priority)
+        }
+
         abstract fun returnNothing()
     }
 
