@@ -46,6 +46,7 @@ public class TNTServerSocket extends WebSocketListener {
 
         TNTServer.Companion.useFreePacket();
         isConnected = true;
+        logger.info("The connection was successful.");
     }
 
     @Override
@@ -60,6 +61,8 @@ public class TNTServerSocket extends WebSocketListener {
 
     @Override
     public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
+        webSocket.close(1000, null);
+
         isConnected = false;
 
         logger.warn("Server close stream: " + code + " -> " + reason);
@@ -67,6 +70,8 @@ public class TNTServerSocket extends WebSocketListener {
 
     @Override
     public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, Response response) {
+        webSocket.close(1000, null);
+
         isConnected = false;
 
         logger.error("Force close: ", t);
@@ -96,7 +101,7 @@ public class TNTServerSocket extends WebSocketListener {
     }
 
     public static WebSocket connect(@NotNull UUID user, @NotNull UUID password) {
-        logger.info("Connect to: " + SERVER_IP);
+        logger.info("Attempting to connect to: " + SERVER_IP);
         Request request = new Request.Builder().url(SERVER_IP).build();
         return Main.Companion.getClient()
                 .newWebSocket(request, new TNTServerSocket(user, password));

@@ -48,6 +48,7 @@ class TNTServer {
                             ) {
                                 nextReconnect = System.currentTimeMillis() + reconnectDelay
 
+                                socket?.close(1000, null)
                                 socket = TNTServerSocket.connect(user, password)
                             }
 
@@ -87,12 +88,9 @@ class TNTServer {
         }
 
         fun request(player: UUID) {
-            logger.debug("TNTClient request: {}", player)
+            logger.debug("The server is requesting player: {}", player)
 
-
-            if (requester == null) return
-
-            requester!!.addTNTClientTask(player) { storage ->
+            requester?.addTNTClientTask(player) { storage ->
                 if (storage == null || socket == null) return@addTNTClientTask
 
                 TNTServerSocket.send(
@@ -107,6 +105,8 @@ class TNTServer {
                         )
                     )
                 )
+
+                logger.info("Information about the player {} has been sent.", player)
             }
         }
     }
