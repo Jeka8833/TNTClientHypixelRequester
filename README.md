@@ -32,10 +32,12 @@ val user: UUID = <TNTClient User>
 val password: UUID = <TNTClient Password>
 val key: UUID = <Hypixel API Key>
 
-val rateLimiter = HypixelRateLimiter(Duration.ofMinutes(5), 60, Duration.ofSeconds(30))
+val resetManager = ResetManager(Duration.ofMinutes(5), Duration.ofSeconds(3))
+val rateLimiter = AsyncHypixelRateLimiter(resetManager, 60, Duration.ofMillis(100),
+    Duration.ofSeconds(2), Duration.ofSeconds(10))
 
 val hypixelAPI = HypixelPipeline(key, rateLimiter)
-val hypixelApiFuture = hypixelAPI.start()
+val hypixelApiFutureList = hypixelAPI.start(2) // 2 threads
 
 val tntServerFuture = TNTServer.connect(user, password, hypixelAPI)
 tntServerFuture.get()  //This line will block the current thread because the API is asynchronous
@@ -52,7 +54,7 @@ val player = UUID.fromString("6bd6e833-a80a-430e-9029-4786368811f9")
 val priority = 0
 
 val hypixelAPI = HypixelPipeline(key, rateLimiter)
-val hypixelApiFuture = hypixelAPI.start()
+val hypixelApiFutureList = hypixelAPI.start(2) // 2 threads
 
 hypixelAPI.addTask(player, priority) { response ->
   if(response == null) throw NullPointerException("Error while executing a request")
@@ -75,24 +77,20 @@ val hypixelAPI = HypixelPipeline(key, rateLimiter)
 
 hypixelAPI.retryTimes = 2 // Number of repetitions after failure
 
-val hypixelApiFuture = hypixelAPI.start()
+val hypixelApiFutureList = hypixelAPI.start(2) // 2 threads
 
 hypixelAPI.addCustomTask(priority) { rateLimitter ->
-    var responseStatus: HypixelRateLimiter.ServerResponse? = null
-    try {
+    HypixelResponse(rateLimitter).use { responseLimiter ->
         ...
 
-        responseStatus = HypixelRateLimiter.ServerResponse.create(
+        responseLimiter.setHeaders(response.code,
             response.header("RateLimit-Reset"),
             response.header("RateLimit-Limit"),
-            response.header("RateLimit-Remaining")
-        )
+            response.header("RateLimit-Remaining"))
 
         ...
 
         return@addCustomTask true
-    } finally {
-        rateLimiter.receiveAndLock(responseStatus)
     }
     return@addCustomTask false  // The operation failed and will be retried.
 }

@@ -57,7 +57,7 @@ class TNTServer {
                             ) {
                                 useFreePacket()
 
-                                val free = requester!!.rateLimiter.freeAtMoment.orElse(1)
+                                val free = requester!!.rateLimiter.freeAtMoment
                                 logger.debug("Free at moment: {}", free)
 
 

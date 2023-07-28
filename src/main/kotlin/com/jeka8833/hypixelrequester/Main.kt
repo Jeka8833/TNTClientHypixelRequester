@@ -43,7 +43,7 @@ class Main {
             }
 
             val dispatcher = Dispatcher()
-            dispatcher.maxRequestsPerHost = 1
+            dispatcher.maxRequestsPerHost = 200
             newBuilder.dispatcher(dispatcher)
             newBuilder.connectionPool(ConnectionPool(1, 30, TimeUnit.SECONDS))
             return newBuilder.build()
