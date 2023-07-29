@@ -10,7 +10,7 @@ import java.util.*
 
 @CommandLine.Command(
     name = "HypixelRequester",
-    version = ["HypixelRequester 1.0.2"],
+    version = ["HypixelRequester 1.0.2.1"],
     mixinStandardHelpOptions = true,
     description = ["A proxy client for requesting player data."]
 )
