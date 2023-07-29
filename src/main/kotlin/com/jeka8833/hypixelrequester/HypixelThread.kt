@@ -33,7 +33,7 @@ class HypixelThread(private val pipeline: HypixelPipeline) : Runnable {
                         task = null
                         break
                     } catch (_: InterruptedException) {
-                        // Force stop after fatal crash
+                        logger.info("Emergency task termination: $task")
                     } catch (e: Exception) {
                         logger.warn("Hypixel loop has an error, try count: $i", e)
                     }

@@ -59,12 +59,6 @@ public class AsyncHypixelRateLimiter {
         requestLock.lockInterruptibly();
         try {
             while (true) {
-                int queue = freeRequests - requestLock.getWaitQueueLength(requestCondition);
-                if (queue <= 0) {   // If too many threads
-                    requestCondition.await();
-                    continue;
-                }
-
                 if (firstTryAt != 0) {  // if fatal crash or first request
                     if (errorSolverThread == null) errorSolverThread = Thread.currentThread();
 
@@ -76,10 +70,15 @@ public class AsyncHypixelRateLimiter {
                         continue;
                     }
                 } else {
-                    long delay = getDelay(queue);
-                    if (delay > 0 && requestCondition.await(delay, TimeUnit.NANOSECONDS)) continue;
+                    int queue = freeRequests - requestLock.getWaitQueueLength(requestCondition);
+                    if (queue <= 0) {   // If too many threads
+                        requestCondition.await();
+                        continue;
+                    } else {
+                        long delay = getDelay(queue);
+                        if (delay > 0 && requestCondition.await(delay, TimeUnit.NANOSECONDS)) continue;
+                    }
                 }
-
                 // Try to make a request
                 if (throttleBlock()) continue;
                 break;
@@ -95,19 +94,22 @@ public class AsyncHypixelRateLimiter {
     }
 
     private boolean throttleBlock() throws InterruptedException {
-        if (Thread.interrupted()) throw new InterruptedException("Throttle interrupt");
-
-        if ((firstTryAt != 0 && !Thread.currentThread().equals(errorSolverThread)) || freeRequests <= 0) return true;
+        if (firstTryAt != 0 && freeRequests <= 0) freeRequests = 1;
 
         long delay;
         while ((delay = lastRequest - System.nanoTime()) > 0) {
-            LockSupport.parkNanos(delay);
-
             if (Thread.interrupted()) throw new InterruptedException("Throttle interrupt");
 
             if ((firstTryAt != 0 && !Thread.currentThread().equals(errorSolverThread)) || freeRequests <= 0)
                 return true;
+
+            LockSupport.parkNanos(delay);
         }
+
+        if (Thread.interrupted()) throw new InterruptedException("Throttle interrupt");
+
+        if ((firstTryAt != 0 && !Thread.currentThread().equals(errorSolverThread)) || freeRequests <= 0)
+            return true;
 
         lastRequest = System.nanoTime() + timeSpaceRequests;
         return false;
@@ -134,6 +136,8 @@ public class AsyncHypixelRateLimiter {
                 threadIterator.next().interrupt();
                 threadIterator.remove();
             }
+
+            requestCondition.signalAll();
         } finally {
             requestLock.unlock();
         }
@@ -142,12 +146,13 @@ public class AsyncHypixelRateLimiter {
     private long getDelay(int requestNumber) {
         int groupRemaining = maxRequests - groupRound(maxRequests - requestNumber, false);
 
-        return resetManager.getResetAfterOrDefault(TimeUnit.NANOSECONDS)
-                - (resetManager.getDurationOrDefault(TimeUnit.NANOSECONDS) * groupRemaining) / maxRequests;
+        return resetManager.getResetAfterOrDefault(TimeUnit.NANOSECONDS) -
+                Math.multiplyExact(resetManager.getDurationOrDefault(TimeUnit.NANOSECONDS), groupRemaining)
+                        / maxRequests;
     }
 
     private int groupRound(int number, boolean maxValue) {
-        int noDelayCount = Math.toIntExact(maxRequests - (noDelayZone * maxRequests) /
+        int noDelayCount = Math.toIntExact(maxRequests - Math.multiplyExact(noDelayZone, maxRequests) /
                 resetManager.getDurationOrDefault(TimeUnit.NANOSECONDS));
         if (number > noDelayCount) {
             if (maxValue) return maxRequests;
@@ -155,7 +160,9 @@ public class AsyncHypixelRateLimiter {
             number = noDelayCount;
         }
 
-        if (maxValue) return Math.min(maxRequests, (number + groupSize - 1) / groupSize * groupSize);
+        if (maxValue) {
+            return (int) Math.min(maxRequests, ((long) number + groupSize - 1) / groupSize * groupSize);
+        }
 
         return number / groupSize * groupSize;
     }
@@ -216,11 +223,12 @@ public class AsyncHypixelRateLimiter {
 
     @Range(from = 0, to = Integer.MAX_VALUE)
     public int getFreeAtMoment() {
-        if (resetManager.isNoInformation()) return Math.max(groupSize, maxRequests);
+        if (resetManager.isNoInformation()) return Math.min(groupSize, maxRequests);
 
-        int mustCount = Math.toIntExact((resetManager.getResetAfterOrDefault(TimeUnit.NANOSECONDS) * maxRequests) /
-                resetManager.getDurationOrDefault(TimeUnit.NANOSECONDS));
-        return Math.max(0, freeRequests - (maxRequests - groupRound(maxRequests - mustCount, true)));
+        int mustCount = Math.toIntExact(
+                Math.multiplyExact(resetManager.getResetAfterOrDefault(TimeUnit.NANOSECONDS), maxRequests) /
+                        resetManager.getDurationOrDefault(TimeUnit.NANOSECONDS));
+        return Math.max(0, freeRequests - maxRequests + groupRound(maxRequests - mustCount, true));
     }
 
     public boolean isFail() {

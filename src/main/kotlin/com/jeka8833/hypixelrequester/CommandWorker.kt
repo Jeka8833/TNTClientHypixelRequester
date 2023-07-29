@@ -2,6 +2,8 @@ package com.jeka8833.hypixelrequester
 
 import com.jeka8833.hypixelrequester.ratelimiter.AsyncHypixelRateLimiter
 import com.jeka8833.hypixelrequester.ratelimiter.ResetManager
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 import picocli.CommandLine
 import java.time.Duration
 import java.util.*
@@ -13,6 +15,8 @@ import java.util.*
     description = ["A proxy client for requesting player data."]
 )
 class CommandWorker : Runnable {
+    private val logger: Logger = LogManager.getLogger(CommandWorker::class.java)
+
     @CommandLine.Option(names = ["-u", "--user"], description = ["TNTClient user name"], required = true)
     lateinit var user: UUID
 
@@ -40,8 +44,10 @@ class CommandWorker : Runnable {
     @CommandLine.Option(names = ["--rateRefresh"], description = ["Refresh time Hypixel API key (Default: PT5M)"])
     var refreshTime: Duration = Duration.ofMinutes(5)
 
-    @CommandLine.Option(names = ["--rateAdditional"], description = ["Addition of time to RefreshTime when you don't " +
-            "know how long the first operation will take. (Default: PT3S)"])
+    @CommandLine.Option(
+        names = ["--rateAdditional"], description = ["Addition of time to RefreshTime when you don't " +
+                "know how long the first operation will take. (Default: PT3S)"]
+    )
     var refreshTimeAdditional: Duration = Duration.ofSeconds(3)
 
     @CommandLine.Option(
@@ -81,6 +87,15 @@ class CommandWorker : Runnable {
             val rateLimiter = AsyncHypixelRateLimiter(resetManager, groupSize, delayTime, noDelayZone, sleepTime)
             val hypixelAPI = HypixelPipeline(key, rateLimiter)
             hypixelAPI.retryTimes = retry
+
+            hypixelAPI.addTask(UUID.fromString("6bd6e833-a80a-430e-9029-4786368811f9"), 0) { storage ->
+                if (storage == null) {
+                    logger.error("Wrong Hypixel key or internet problems. The programme is not stopped, " +
+                            "but you have to solve this problem.")
+                } else {
+                    logger.info("The Hypixel key is working and ready to use.")
+                }
+            }
 
             hypixelAPI.start(threads)
 
