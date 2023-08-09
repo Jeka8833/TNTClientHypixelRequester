@@ -1,6 +1,5 @@
 package com.jeka8833.hypixelrequester.tntclient;
 
-import com.jeka8833.hypixelrequester.util.BiMap;
 import com.jeka8833.hypixelrequester.Main;
 import com.jeka8833.hypixelrequester.tntclient.packet.Packet;
 import com.jeka8833.hypixelrequester.tntclient.packet.PacketInputStream;
@@ -9,7 +8,7 @@ import com.jeka8833.hypixelrequester.tntclient.packet.packets.AuthPacket;
 import com.jeka8833.hypixelrequester.tntclient.packet.packets.ReceiveHypixelPlayerPacket;
 import com.jeka8833.hypixelrequester.tntclient.packet.packets.RequestHypixelPlayerPacket;
 import com.jeka8833.hypixelrequester.tntclient.packet.packets.UpdateFreeRequestsPacket;
-import com.jeka8833.hypixelrequester.TNTServer;
+import com.jeka8833.hypixelrequester.util.BiMap;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.WebSocket;
@@ -43,10 +42,6 @@ public class TNTServerSocket extends WebSocketListener {
     @Override
     public void onOpen(@NotNull WebSocket webSocket, @NotNull Response response) {
         send(webSocket, new AuthPacket(user, password));
-
-        TNTServer.Companion.useFreePacket();
-        isConnected = true;
-        logger.info("The connection was successful.");
     }
 
     @Override
