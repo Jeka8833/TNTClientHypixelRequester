@@ -1,9 +1,9 @@
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.9.0'
+    id 'org.jetbrains.kotlin.jvm' version '1.8.21'
 }
 
 group = 'com.jeka8833'
-version = '1.0.2.2'
+version = '1.0.2.3'
 
 repositories {
     mavenCentral()
@@ -14,17 +14,17 @@ dependencies {
     implementation group: 'org.jetbrains', name: 'annotations', version: '24.0.1'
 
     // https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
-    implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '4.11.0'
+    implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '4.12.0'
 
     // https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core
-    implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.20.0'
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.21.1'
 
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
     implementation group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
 
     // https://mvnrepository.com/artifact/info.picocli/picocli
-    implementation group: 'info.picocli', name: 'picocli', version: '4.7.4'
-    annotationProcessor 'info.picocli:picocli-codegen:4.7.4'
+    implementation group: 'info.picocli', name: 'picocli', version: '4.7.5'
+    annotationProcessor 'info.picocli:picocli-codegen:4.7.5'
 }
 
 jar {
@@ -40,12 +40,4 @@ jar {
 
 test {
     useJUnitPlatform()
-}
-
-compileKotlin {
-    kotlinOptions.jvmTarget = '1.8'
-}
-
-compileTestKotlin {
-    kotlinOptions.jvmTarget = '1.8'
 }

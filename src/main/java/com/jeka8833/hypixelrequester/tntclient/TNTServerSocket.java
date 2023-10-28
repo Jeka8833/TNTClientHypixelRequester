@@ -22,11 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.UUID;
 
 public class TNTServerSocket extends WebSocketListener {
-
-    private static final boolean LOCAL_HOST = false;
-    private static final String SERVER_IP = LOCAL_HOST ?
-            "ws://localhost:8833" : "ws://api.tntclient.jeka8833.pp.ua:8833";
-
     private static final Logger logger = LogManager.getLogger(TNTServerSocket.class);
 
     public static volatile boolean isConnected = false;
@@ -95,9 +90,9 @@ public class TNTServerSocket extends WebSocketListener {
         return isConnected;
     }
 
-    public static WebSocket connect(@NotNull UUID user, @NotNull UUID password) {
-        logger.info("Attempting to connect to: " + SERVER_IP);
-        Request request = new Request.Builder().url(SERVER_IP).build();
+    public static WebSocket connect(String serverIP, @NotNull UUID user, @NotNull UUID password) {
+        logger.info("Attempting to connect to: " + serverIP);
+        Request request = new Request.Builder().url(serverIP).build();
         return Main.Companion.getClient()
                 .newWebSocket(request, new TNTServerSocket(user, password));
     }

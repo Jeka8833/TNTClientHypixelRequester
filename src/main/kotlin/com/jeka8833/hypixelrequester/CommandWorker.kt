@@ -10,7 +10,7 @@ import java.util.*
 
 @CommandLine.Command(
     name = "HypixelRequester",
-    version = ["HypixelRequester 1.0.2.2"],
+    version = ["HypixelRequester 1.0.2.3"],
     mixinStandardHelpOptions = true,
     description = ["A proxy client for requesting player data."]
 )
@@ -81,6 +81,13 @@ class CommandWorker : Runnable {
     )
     var threads: Int = 1
 
+    @CommandLine.Option(
+        names = ["--tntServerIP"],
+        description = ["IP address of the TNTClient server. (Default: wss://tnthypixel.jeka8833.pp.ua)"]
+    )
+    var serverIP: String = "wss://tnthypixel.jeka8833.pp.ua"
+
+
     override fun run() {
         try {
             val resetManager = ResetManager(refreshTime, refreshTimeAdditional)
@@ -90,8 +97,10 @@ class CommandWorker : Runnable {
 
             hypixelAPI.addTask(UUID.fromString("6bd6e833-a80a-430e-9029-4786368811f9"), 0) { storage ->
                 if (storage == null) {
-                    logger.error("Wrong Hypixel key or internet problems. The programme is not stopped, " +
-                            "but you have to solve this problem.")
+                    logger.error(
+                        "Wrong Hypixel key or internet problems. The programme is not stopped, " +
+                                "but you have to solve this problem."
+                    )
                 } else {
                     logger.info("The Hypixel key is working and ready to use.")
                 }
@@ -101,7 +110,7 @@ class CommandWorker : Runnable {
 
             TNTServer.freePacketDelay = freePacketDelay.toMillis()
             TNTServer.reconnectDelay = reconnectDelay.toMillis()
-            val future = TNTServer.connect(user, password, hypixelAPI)
+            val future = TNTServer.connect(serverIP, user, password, hypixelAPI)
             future.get()
         } finally {
             ResetManager.shutdown()

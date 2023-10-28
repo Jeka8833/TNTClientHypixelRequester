@@ -1,13 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
+    <Properties>
+        <Property name="baseDir">logs/HypixelRequester</Property>
+    </Properties>
     <Appenders>
         <Console name="console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss dd.MM.yyyy} [%t] %c{1}:%L %-5p - %m%n"/>
         </Console>
+        <RollingFile name="File" fileName="${baseDir}/TNTServer-latest.log"
+                     filePattern="${baseDir}/TNTServer-%d{yyyy-MM-dd}.log.gz" ignoreExceptions="false">
+            <PatternLayout pattern="%d{HH:mm:ss} [%t] %c{1}:%L %-5p - %m%n"/>
+            <TimeBasedTriggeringPolicy/>
+            <DefaultRolloverStrategy>
+                <Delete basePath="${baseDir}" maxDepth="1">
+                    <IfFileName glob="TNTServer-*.log.gz"/>
+                    <IfLastModified age="P30D"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
     </Appenders>
     <Loggers>
         <Root level="INFO">
             <AppenderRef ref="console"/>
+            <AppenderRef ref="File"/>
         </Root>
     </Loggers>
 </Configuration>

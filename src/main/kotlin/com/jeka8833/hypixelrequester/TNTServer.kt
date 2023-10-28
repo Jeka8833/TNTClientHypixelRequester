@@ -36,7 +36,7 @@ class TNTServer {
             t
         }
 
-        fun connect(user: UUID, password: UUID, hypixel: HypixelPipeline): Future<Void> {
+        fun connect(serverIP : String, user: UUID, password: UUID, hypixel: HypixelPipeline): Future<Void> {
             return thread.submit(Callable {
                 try {
                     requester = hypixel
@@ -49,7 +49,7 @@ class TNTServer {
                                 nextReconnect = System.currentTimeMillis() + reconnectDelay
 
                                 socket?.close(1000, null)
-                                socket = TNTServerSocket.connect(user, password)
+                                socket = TNTServerSocket.connect(serverIP, user, password)
                             }
 
                             if (TNTServerSocket.isConnect() && socket != null && requester != null &&
