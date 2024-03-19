@@ -129,6 +129,8 @@ public class AsyncHypixelRateLimiter {
 
         requestLock.lock();
         try {
+            freeRequests = 0;
+
             requestCondition.signalAll();
 
             Iterator<Thread> threadIterator = threadList.iterator();

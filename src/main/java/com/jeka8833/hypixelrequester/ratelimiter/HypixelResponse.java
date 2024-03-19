@@ -1,11 +1,12 @@
 package com.jeka8833.hypixelrequester.ratelimiter;
 
 import org.jetbrains.annotations.Blocking;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
-import java.util.NoSuchElementException;
+import java.util.OptionalInt;
 import java.util.OptionalLong;
 
 public class HypixelResponse implements Closeable {
@@ -22,38 +23,33 @@ public class HypixelResponse implements Closeable {
 
     public void setHeaders(int statusCode, @Nullable String reset, @Nullable String limit, @Nullable String remaining)
             throws InterruptedException {
-        if (!(statusCode == 200 || statusCode == 429)) rateLimiter.fatalError();
+        OptionalInt resetInt = parseInt(reset);
+        OptionalInt limitInt = parseInt(limit);
+        OptionalInt remainingInt = parseInt(remaining);
 
-        try {
-            if (reset == null) throw new NumberFormatException("Cannot parse null string");
-            rateLimiter.resetManager.addResetAfter(Integer.parseInt(reset));
+        if (resetInt.isPresent()) rateLimiter.resetManager.addResetAfter(resetInt.getAsInt());
+        limitInt.ifPresent(value -> rateLimiter.maxRequests = value);
 
-            if (limit == null) throw new NumberFormatException("Cannot parse null string");
-            rateLimiter.maxRequests = Integer.parseInt(limit);
-
-            if (statusCode == 200 || statusCode == 429) {
-                if (remaining == null) throw new NumberFormatException("Cannot parse null string");
-                rateLimiter.callGood(Integer.parseInt(remaining));
-            }
-        } catch (NumberFormatException ignore) {
-            if (statusCode == 200) rateLimiter.fatalError();
+        if (statusCode != 200 || !resetInt.isPresent() || !limitInt.isPresent() || !remainingInt.isPresent()) {
+            rateLimiter.fatalError();
+        } else {
+            rateLimiter.callGood(remainingInt.getAsInt());
         }
 
         isInternalError = false;
     }
 
-    @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "DataFlowIssue", "OptionalGetWithoutIsPresent"})
+    @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "OptionalAssignedToNull"})
     public void setHeaders(int statusCode, @Nullable OptionalLong reset,
                            @Nullable OptionalLong limit, @Nullable OptionalLong remaining) throws InterruptedException {
-        if (!(statusCode == 200 || statusCode == 429)) rateLimiter.fatalError();
+        if (reset != null && reset.isPresent()) rateLimiter.resetManager.addResetAfter((int) reset.getAsLong());
+        if (limit != null && limit.isPresent()) rateLimiter.maxRequests = (int) limit.getAsLong();
 
-        try {
-            rateLimiter.resetManager.addResetAfter((int) reset.getAsLong());
-            rateLimiter.maxRequests = (int) limit.getAsLong();
-
-            if (statusCode == 200 || statusCode == 429) rateLimiter.callGood((int) remaining.getAsLong());
-        } catch (NoSuchElementException | NullPointerException ignore) {
-            if (statusCode == 200) rateLimiter.fatalError();
+        if (statusCode != 200 || reset == null || limit == null || remaining == null ||
+                !reset.isPresent() || !limit.isPresent() || !remaining.isPresent()) {
+            rateLimiter.fatalError();
+        } else {
+            rateLimiter.callGood((int) remaining.getAsLong());
         }
 
         isInternalError = false;
@@ -65,4 +61,17 @@ public class HypixelResponse implements Closeable {
 
         if (isInternalError) rateLimiter.fatalError();
     }
+
+    @NotNull
+    @Contract(pure = true, value = "_ -> new")
+    private static OptionalInt parseInt(@Nullable String value) {
+        if (value == null) return OptionalInt.empty();
+
+        try {
+            return OptionalInt.of(Integer.parseInt(value));
+        } catch (NumberFormatException e) {
+            return OptionalInt.empty();
+        }
+    }
 }
+

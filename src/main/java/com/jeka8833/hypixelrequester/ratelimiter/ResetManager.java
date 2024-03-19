@@ -44,7 +44,7 @@ public class ResetManager {
 
     @Blocking
     public void addResetAfter(int second) throws InterruptedException {
-        long resetAt = System.nanoTime() + second * 1_000_000_000L + 999_999_999L;
+        long resetAt = System.nanoTime() + second * 1_000_000_000L + 2 * 1_000_000_000L;
 
         this.resetAt.getAndUpdate(operand -> {
             if (operand > resetAt || resetAt - operand > duration / 2) return resetAt;

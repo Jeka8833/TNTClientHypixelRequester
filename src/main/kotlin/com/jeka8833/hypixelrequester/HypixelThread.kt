@@ -50,7 +50,7 @@ class HypixelThread(private val pipeline: HypixelPipeline) : Runnable {
 
     private fun hypixelRequest(task: HypixelPipeline.DefaultHypixelRequest): Boolean {
         val requestHTTP: Request = Request.Builder()
-            .url("https://api.hypixel.net/player?uuid=" + task.player)
+            .url("https://api.hypixel.net/v2/player?uuid=" + task.player)
             .header("API-Key", pipeline.key.toString())
             .build()
 

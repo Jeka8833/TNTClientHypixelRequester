@@ -21,16 +21,16 @@ public class HypixelPlayerStorage {
 
         stream.writeInt(stats.TNTGames.wins_tntrun);
         stream.writeInt(stats.TNTGames.deaths_tntrun);
-        stream.writeInt(stats.TNTGames.new_tntrun_double_jumps);
+        stream.writeInt(7);         // new_tntrun_double_jumps
 
         stream.writeInt(stats.TNTGames.wins_pvprun);
         stream.writeInt(stats.TNTGames.deaths_pvprun);
-        stream.writeInt(stats.TNTGames.new_pvprun_double_jumps);
+        stream.writeInt(7);         // new_pvprun_double_jumps
         stream.writeInt(stats.TNTGames.kills_pvprun);
 
         stream.writeInt(stats.TNTGames.wins_bowspleef);
         stream.writeInt(stats.TNTGames.deaths_bowspleef);
-        stream.writeInt(stats.TNTGames.new_spleef_double_jumps);
+        stream.writeInt(7);         // new_spleef_double_jumps
 
         stream.writeInt(stats.TNTGames.wins_tntag);
         stream.writeInt(stats.TNTGames.deaths_tntag);
@@ -61,18 +61,12 @@ public class HypixelPlayerStorage {
         @SerializedName("deaths_tntrun")
         public int deaths_tntrun = -1;
 
-        @SerializedName("new_tntrun_double_jumps")
-        public int new_tntrun_double_jumps = -1;
-
         // For PVPRun game
         @SerializedName("wins_pvprun")
         public int wins_pvprun = -1;
 
         @SerializedName("deaths_pvprun")
         public int deaths_pvprun = -1;
-
-        @SerializedName("new_pvprun_double_jumps")
-        public int new_pvprun_double_jumps = -1;
 
         @SerializedName("kills_pvprun")
         public int kills_pvprun = -1;
@@ -83,9 +77,6 @@ public class HypixelPlayerStorage {
 
         @SerializedName("deaths_bowspleef")
         public int deaths_bowspleef = -1;
-
-        @SerializedName("new_spleef_double_jumps")
-        public int new_spleef_double_jumps = -1;
 
         // For TNTTag game
         @SerializedName("wins_tntag")
