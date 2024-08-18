@@ -55,7 +55,7 @@ public class TNTServerSocket extends WebSocketListener {
 
         isConnected = false;
 
-        logger.warn("Server close stream: " + code + " -> " + reason);
+        logger.warn("Server close stream: {} -> {}", code, reason);
     }
 
     @Override
@@ -81,9 +81,10 @@ public class TNTServerSocket extends WebSocketListener {
 
     static {
         registeredPackets.put((byte) 255, AuthPacket.class);
-        registeredPackets.put((byte) 13, ReceiveHypixelPlayerPacket.class);
         registeredPackets.put((byte) 14, RequestHypixelPlayerPacket.class);
         registeredPackets.put((byte) 15, UpdateFreeRequestsPacket.class);
+        registeredPackets.put((byte) 17, ReceiveHypixelPlayerPacket.class);
+        registeredPackets.put((byte) 18, RequestHypixelPlayerPacket.class);
     }
 
     public static boolean isConnect() {
@@ -91,7 +92,7 @@ public class TNTServerSocket extends WebSocketListener {
     }
 
     public static WebSocket connect(String serverIP, @NotNull UUID user, @NotNull UUID password) {
-        logger.info("Attempting to connect to: " + serverIP);
+        logger.info("Attempting to connect to: {}", serverIP);
         Request request = new Request.Builder().url(serverIP).build();
         return Main.Companion.getClient()
                 .newWebSocket(request, new TNTServerSocket(user, password));

@@ -65,7 +65,7 @@ class HypixelThread(private val pipeline: HypixelPipeline) : Runnable {
 
                 if (response.isSuccessful) {
                     response.body.use { body ->
-                        body?.charStream().use { reader ->
+                        body.charStream().use { reader ->
                             val structure: HypixelParser? = Main.gson.fromJson(reader, HypixelParser::class.java)
                             if (structure?.player != null) {
                                 task.listener.accept(structure.player)

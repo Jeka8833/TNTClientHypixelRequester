@@ -21,16 +21,13 @@ public class HypixelPlayerStorage {
 
         stream.writeInt(stats.TNTGames.wins_tntrun);
         stream.writeInt(stats.TNTGames.deaths_tntrun);
-        stream.writeInt(7);         // new_tntrun_double_jumps
 
         stream.writeInt(stats.TNTGames.wins_pvprun);
         stream.writeInt(stats.TNTGames.deaths_pvprun);
-        stream.writeInt(7);         // new_pvprun_double_jumps
         stream.writeInt(stats.TNTGames.kills_pvprun);
 
         stream.writeInt(stats.TNTGames.wins_bowspleef);
         stream.writeInt(stats.TNTGames.deaths_bowspleef);
-        stream.writeInt(7);         // new_spleef_double_jumps
 
         stream.writeInt(stats.TNTGames.wins_tntag);
         stream.writeInt(stats.TNTGames.deaths_tntag);
@@ -42,6 +39,7 @@ public class HypixelPlayerStorage {
 
         stream.writeInt(stats.duels.bowSpleefDuelWins);
         stream.writeInt(stats.duels.bowSpleefDuelLosses);
+        stream.writeInt(stats.duels.bowSpleefDuelWinstreak);
     }
 
     public static class Stats {
@@ -114,5 +112,8 @@ public class HypixelPlayerStorage {
 
         @SerializedName("bowspleef_duel_losses")
         public int bowSpleefDuelLosses = -1;
+
+        @SerializedName("current_winstreak_mode_bowspleef_duel")
+        public int bowSpleefDuelWinstreak = -1;
     }
 }

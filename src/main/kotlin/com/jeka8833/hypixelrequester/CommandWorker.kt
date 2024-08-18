@@ -98,7 +98,7 @@ class CommandWorker : Runnable {
             hypixelAPI.addTask(UUID.fromString("6bd6e833-a80a-430e-9029-4786368811f9"), 0) { storage ->
                 if (storage == null) {
                     logger.error(
-                        "Wrong Hypixel key or internet problems. The programme is not stopped, " +
+                        "Wrong Hypixel key or internet problems. This utility is not stopped, " +
                                 "but you have to solve this problem."
                     )
                 } else {

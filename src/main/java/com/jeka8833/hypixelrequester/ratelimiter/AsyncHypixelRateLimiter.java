@@ -22,27 +22,26 @@ public class AsyncHypixelRateLimiter {
     final Set<Thread> threadList = ConcurrentHashMap.newKeySet();
     private final ReentrantLock requestLock = new ReentrantLock(true);
     private final Condition requestCondition = requestLock.newCondition();
-
+    volatile @Range(from = 1, to = Integer.MAX_VALUE) int maxRequests = 1;
     private @Range(from = INFINITY_GROUPS, to = ONE_GROUP) int groupSize;
     private @Range(from = 0, to = Long.MAX_VALUE) long timeSpaceRequests;
     private @Range(from = 0, to = Long.MAX_VALUE) long sleepAfterFail;
     private @Range(from = 0, to = Long.MAX_VALUE) long noDelayZone;
-
     private volatile @Range(from = 0, to = Integer.MAX_VALUE) int freeRequests = 1;
-    volatile @Range(from = 1, to = Integer.MAX_VALUE) int maxRequests = 1;
-    private volatile @Nullable Thread errorSolverThread = null;
     private volatile long firstTryAt = System.nanoTime();
+    private volatile @Nullable Thread errorSolverThread = null;
     private long lastRequest = 0;
 
     public AsyncHypixelRateLimiter(@NotNull ResetManager resetManager,
                                    @Range(from = 1, to = Integer.MAX_VALUE) int groupSize,
-                                   @NotNull Duration timeSpaceRequests, @NotNull Duration noDelayZone,
+                                   @NotNull Duration delayBetweenRequests,
+                                   @NotNull Duration freeEndZone,
                                    @NotNull Duration sleepAfterFail) {
         this.resetManager = resetManager;
         setGroupSize(groupSize);
         setSleepAfterFail(sleepAfterFail);
-        setTimeSpaceRequests(timeSpaceRequests);
-        setNoDelayZone(noDelayZone);
+        setTimeSpaceRequests(delayBetweenRequests);
+        setNoDelayZone(freeEndZone);
 
         resetManager.addResetCallback((manager) -> setFreeRequests(maxRequests));
         resetManager.addUpdateCallback((manager) -> {
@@ -125,7 +124,7 @@ public class AsyncHypixelRateLimiter {
     }
 
     void fatalError() {
-        firstTryAt = System.nanoTime() + sleepAfterFail;
+        firstTryAt = Math.max(System.nanoTime() + sleepAfterFail, resetManager.getResetAtNanos());
 
         requestLock.lock();
         try {
@@ -138,8 +137,6 @@ public class AsyncHypixelRateLimiter {
                 threadIterator.next().interrupt();
                 threadIterator.remove();
             }
-
-            requestCondition.signalAll();
         } finally {
             requestLock.unlock();
         }
@@ -149,13 +146,13 @@ public class AsyncHypixelRateLimiter {
         int groupRemaining = maxRequests - groupRound(maxRequests - requestNumber, false);
 
         return resetManager.getResetAfterOrDefault(TimeUnit.NANOSECONDS) -
-                Math.multiplyExact(resetManager.getDurationOrDefault(TimeUnit.NANOSECONDS), groupRemaining)
+                Math.multiplyExact(resetManager.getDuration(TimeUnit.NANOSECONDS), groupRemaining)
                         / maxRequests;
     }
 
     private int groupRound(int number, boolean maxValue) {
         int noDelayCount = Math.toIntExact(maxRequests - Math.multiplyExact(noDelayZone, maxRequests) /
-                resetManager.getDurationOrDefault(TimeUnit.NANOSECONDS));
+                resetManager.getDuration(TimeUnit.NANOSECONDS));
         if (number > noDelayCount) {
             if (maxValue) return maxRequests;
 
@@ -229,7 +226,7 @@ public class AsyncHypixelRateLimiter {
 
         int mustCount = Math.toIntExact(
                 Math.multiplyExact(resetManager.getResetAfterOrDefault(TimeUnit.NANOSECONDS), maxRequests) /
-                        resetManager.getDurationOrDefault(TimeUnit.NANOSECONDS));
+                        resetManager.getDuration(TimeUnit.NANOSECONDS));
         return Math.max(0, freeRequests - maxRequests + groupRound(maxRequests - mustCount, true));
     }
 

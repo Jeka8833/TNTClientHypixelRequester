@@ -36,16 +36,14 @@ class TNTServer {
             t
         }
 
-        fun connect(serverIP : String, user: UUID, password: UUID, hypixel: HypixelPipeline): Future<Void> {
+        fun connect(serverIP: String, user: UUID, password: UUID, hypixel: HypixelPipeline): Future<Void> {
             return thread.submit(Callable {
                 try {
                     requester = hypixel
 
                     while (!Thread.interrupted()) {
                         try {
-                            if (socket == null ||
-                                (!TNTServerSocket.isConnect() && System.currentTimeMillis() > nextReconnect)
-                            ) {
+                            if (!TNTServerSocket.isConnect() && System.currentTimeMillis() > nextReconnect) {
                                 nextReconnect = System.currentTimeMillis() + reconnectDelay
 
                                 socket?.close(1000, null)
@@ -79,7 +77,7 @@ class TNTServer {
             })
         }
 
-        fun useFreePacket() {
+        private fun useFreePacket() {
             nextSendFreePacket = System.currentTimeMillis() + freePacketDelay
         }
 

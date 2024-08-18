@@ -21,6 +21,18 @@ public class HypixelResponse implements Closeable {
         rateLimiter.block();
     }
 
+    @NotNull
+    @Contract(pure = true, value = "_ -> new")
+    private static OptionalInt parseInt(@Nullable String value) {
+        if (value == null) return OptionalInt.empty();
+
+        try {
+            return OptionalInt.of(Integer.parseInt(value));
+        } catch (NumberFormatException e) {
+            return OptionalInt.empty();
+        }
+    }
+
     public void setHeaders(int statusCode, @Nullable String reset, @Nullable String limit, @Nullable String remaining)
             throws InterruptedException {
         OptionalInt resetInt = parseInt(reset);
@@ -30,7 +42,7 @@ public class HypixelResponse implements Closeable {
         if (resetInt.isPresent()) rateLimiter.resetManager.addResetAfter(resetInt.getAsInt());
         limitInt.ifPresent(value -> rateLimiter.maxRequests = value);
 
-        if (statusCode != 200 || !resetInt.isPresent() || !limitInt.isPresent() || !remainingInt.isPresent()) {
+        if (statusCode != 200 || resetInt.isEmpty() || limitInt.isEmpty() || remainingInt.isEmpty()) {
             rateLimiter.fatalError();
         } else {
             rateLimiter.callGood(remainingInt.getAsInt());
@@ -46,7 +58,7 @@ public class HypixelResponse implements Closeable {
         if (limit != null && limit.isPresent()) rateLimiter.maxRequests = (int) limit.getAsLong();
 
         if (statusCode != 200 || reset == null || limit == null || remaining == null ||
-                !reset.isPresent() || !limit.isPresent() || !remaining.isPresent()) {
+                reset.isEmpty() || limit.isEmpty() || remaining.isEmpty()) {
             rateLimiter.fatalError();
         } else {
             rateLimiter.callGood((int) remaining.getAsLong());
@@ -61,17 +73,4 @@ public class HypixelResponse implements Closeable {
 
         if (isInternalError) rateLimiter.fatalError();
     }
-
-    @NotNull
-    @Contract(pure = true, value = "_ -> new")
-    private static OptionalInt parseInt(@Nullable String value) {
-        if (value == null) return OptionalInt.empty();
-
-        try {
-            return OptionalInt.of(Integer.parseInt(value));
-        } catch (NumberFormatException e) {
-            return OptionalInt.empty();
-        }
-    }
 }
-
