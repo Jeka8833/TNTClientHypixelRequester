@@ -51,6 +51,9 @@ public class HypixelWebAPI {
                         response.header("RateLimit-Remaining"),
                         response.header("RateLimit-Reset"));
 
+                LOGGER.info("Hypixel API response: {}", response.code());
+                LOGGER.info("Hypixel API response body: {}", response.headers());
+
                 if (response.isSuccessful()) {
                     return Optional.of(isAuthenticated = true);
                 }
@@ -59,6 +62,8 @@ public class HypixelWebAPI {
                 }
             }
         }
+
+        isAuthenticated = true;
 
         return Optional.empty();
     }
@@ -136,7 +141,8 @@ public class HypixelWebAPI {
                                 }
                             }
                         }
-                    } catch (Exception ignored) {
+                    } catch (Exception e) {
+                        LOGGER.warn("Hypixel API request failed for player, {}", player, e);
                     }
                 }
 
